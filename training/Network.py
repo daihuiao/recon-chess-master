@@ -1,6 +1,7 @@
 import tensorflow as tf
 from math import ceil
 import nvidia_smi
+import wandb
 
 from tensorflow.keras.layers import Dense, Flatten, Conv2D, LSTM, Reshape, Masking
 from tensorflow.keras import Model
@@ -262,7 +263,9 @@ class ReconChessNet(Model):
 
 		loss,pg_loss,entropy,vf_loss = np.sum(accumulate_loss),np.sum(accumulate_pg_loss), \
 										np.sum(accumulate_entropy),np.sum(accumulate_vf_loss)
-
+		# wandb.log({
+		#
+		# })
 
 		return loss,pg_loss,entropy,vf_loss,g_n.numpy()
 

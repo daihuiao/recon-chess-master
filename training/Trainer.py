@@ -77,6 +77,7 @@ class ReconTrainer:
             use_cpu = True
         
         self.train_player = ReconPlayer('train',max_batch_size,learning_rate,use_cpu)
+        use_cpu = True# todo right ?
         self.opponents = [ReconPlayer('opponent '+str(i),max_batch_size,learning_rate,use_cpu) for i in range(self.n_opponents)]
         self.strongest_opponent = SharedArray((1,))
         if rank==0:
@@ -262,7 +263,7 @@ class ReconTrainer:
                         ' score':np.mean(self.score),
                         ' Win pct':'{0:.2f}'.format(self.win_avg),
                         ' loss pct':'{0:.2f}'.format(self.loss_avg)})
-            wandb.log({'rank1_performance/loop': loop,
+            wandb.log({' rank1_performance/loop': loop,
                        ' rank1_performance/Games Played':ngames,
                        ' rank1_performance/Wins':tot_wins/ngames,
                        ' rank1_performance/losses':tot_losses/ngames,
@@ -324,7 +325,7 @@ class ReconTrainer:
                            "train/steps_gathered":sum([len(m) for m in mem[0]]),
                            })
                 batch_size = len(samples_available)//2
-                n_batches = len(samples_available)//batch_size*epochs#2*4
+                n_batches = len(samples_available)//batch_size*epochs#2*5
 
                 #print(len(samples_available),batch_size,n_batches)
 
