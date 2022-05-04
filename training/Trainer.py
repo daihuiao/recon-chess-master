@@ -77,7 +77,7 @@ class ReconTrainer:
             use_cpu = True
         
         self.train_player = ReconPlayer('train',max_batch_size,learning_rate,use_cpu)
-        use_cpu = True# todo right ?
+        # use_cpu = True# todo right ?
         self.opponents = [ReconPlayer('opponent '+str(i),max_batch_size,learning_rate,use_cpu) for i in range(self.n_opponents)]
         self.strongest_opponent = SharedArray((1,))
         if rank==0:
@@ -255,14 +255,14 @@ class ReconTrainer:
             print('loop: ', loop,' Games Played: ',ngames,' Wins: ',tot_wins, ' losses: ',tot_losses,
                 ' ties: ',tot_ties,' score: ',np.mean(self.score),' Win pct: ','{0:.2f}'.format(self.win_avg),' loss pct: ','{0:.2f}'.format(self.loss_avg))
 
-            wandb.log({'loop': loop,
-                       ' Games Played':ngames,
-                       ' Wins':tot_wins,
-                       ' losses':tot_losses,
-                       ' ties':tot_ties,
-                        ' score':np.mean(self.score),
-                        ' Win pct':'{0:.2f}'.format(self.win_avg),
-                        ' loss pct':'{0:.2f}'.format(self.loss_avg)})
+            # wandb.log({'loop': loop,
+            #            ' Games Played':ngames,
+            #            ' Wins':tot_wins,
+            #            ' losses':tot_losses,
+            #            ' ties':tot_ties,
+            #             ' score':np.mean(self.score),
+                        # ' Win pct':'{0:.2f}'.format(self.win_avg),
+                        # ' loss pct':'{0:.2f}'.format(self.loss_avg)})
             wandb.log({' rank1_performance/loop': loop,
                        ' rank1_performance/Games Played':ngames,
                        ' rank1_performance/Wins':tot_wins/ngames,
@@ -272,9 +272,9 @@ class ReconTrainer:
                        ' rank1_performance/min_score':np.amin(np.mean(self.score,0)),
                        ' rank1_performance/max_score':np.amax(np.mean(self.score,0)),
                        ' rank1_performance/strongest':self.strongest_opponent[0],
-                       ' rank1_performance/Win avg':'{0:.2f}'.format(self.win_avg),
-                       ' rank1_performance/loss avg':'{0:.2f}'.format(self.loss_avg),
-                       ' rank1_performance/tie avg':'{0:.2f}'.format(self.tie_avg),
+                       # ' rank1_performance/Win avg':'{0:.2f}'.format(self.win_avg),
+                       # ' rank1_performance/loss avg':'{0:.2f}'.format(self.loss_avg),
+                       # ' rank1_performance/tie avg':'{0:.2f}'.format(self.tie_avg),
                        })
 
             with open(self.game_stat_path,'a',newline='', encoding='utf-8') as output:
@@ -320,12 +320,15 @@ class ReconTrainer:
                 print(f'Rank 0 got {len(mem[0])} episodes')#memory = [obs_memory,mask_memory,action_memory,rewards,gae],action_memory=action,prob,value
                 samples_available = list(range(len(mem[0])))
                 total_steps_gathered += sum([len(m) for m in mem[0]])
-                wandb.log({"train/Rank 0 got {len(mem[0])} episodes":len(mem[0]),
-                           "train/total_steps_gathered":total_steps_gathered,
-                           "train/steps_gathered":sum([len(m) for m in mem[0]]),
-                           })
                 batch_size = len(samples_available)//2
                 n_batches = len(samples_available)//batch_size*epochs#2*5
+                wandb.log({"rank0_train/Rank 0 got {len(mem[0])} episodes":len(mem[0]),
+                           "rank0_train/total_steps_gathered":total_steps_gathered,
+                           "rank0_train/steps_gathered":sum([len(m) for m in mem[0]]),
+
+                           "num/n_batches":n_batches,
+                           'num/batch_size':batch_size,
+                           })
 
                 #print(len(samples_available),batch_size,n_batches)
 
@@ -336,12 +339,16 @@ class ReconTrainer:
                         samples_available = list(range(len(mem[0])))
                         
                     batch = [[m[idx] for idx in sample_idx] for m in mem]
+
                     loss,pg_loss,entropy,vf_loss,g_n = self.send_batch(batch)
-                    wandb.log({"loss":loss,
-                               'pg_loss':pg_loss,
-                               'entropy':entropy,
-                               'vf_loss':vf_loss,
-                                'g_n':g_n})
+
+                    wandb.log({"rank0_train_for/loss":loss,
+                               'rank0_train_for/pg_loss':pg_loss,
+                               'rank0_train_for/entropy':entropy,
+                               'rank0_train_for/vf_loss':vf_loss,
+                                'rank0_train_for/g_n':g_n,
+
+                               })
                     print('iter: ',i, 'batch_size: ',batch_size,' Loss: ',loss,' Policy Loss: ',pg_loss,' Entropy: ',entropy,' Value Loss: ',vf_loss,' Grad Norm: ',g_n)
 
                     with open(self.net_stat_path,'a',newline='', encoding='utf-8') as output:
@@ -373,6 +380,9 @@ class ReconTrainer:
 
                 steps_per_second = total_steps_gathered*epochs/(time.time()-start_time)
                 msteps_per_day = steps_per_second*60*60*24/1e6
+                wandb.log({
+                    "num/msteps_per_day":msteps_per_day,
+                })
                 print('loop: ',loop,' steps per second: ','{0:.2f}'.format(steps_per_second),' million steps per day: ','{0:.2f}'.format(msteps_per_day))
 
             loop += 1

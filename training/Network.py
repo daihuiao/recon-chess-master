@@ -218,6 +218,10 @@ class ReconChessNet(Model):
 
 		total_batch_size = len(inputs)
 		n_iters = ceil(total_batch_size/self.max_batch_size)
+		wandb.log({
+			"update/n_iters":n_iters,
+			"update/total_batch_size":total_batch_size
+		})
 		batch_size_per_iter = self.max_batch_size
 
 		accumulate_gradients = []
